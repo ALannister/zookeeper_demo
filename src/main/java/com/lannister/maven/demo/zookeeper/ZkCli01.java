@@ -19,62 +19,62 @@ public class ZkCli01 {
 	private static String connectString = "192.168.2.101:2181,192.168.2.102:2181,192.168.2.103:2181";
 	private static int sessionTimeout = 2000;
 	private ZooKeeper zkClient = null;
-	
-	//KeeperException �쳣:һ���Ǵ����ڵ�ʱ�ڵ��Ѵ��ڣ����߻�ȡ�ڵ�ʱ�ڵ㲻���ڵ��µ� 
-	//InterruptedException �쳣: һ�����߳�������ȴ�ʱ����ϵ��µ�
-	//����zookeeper�ͻ��ˣ�����Ӽ�����
+
+	//KeeperException 异常:一般是创建节点时节点已存在，或者获取节点时节点不存在导致的
+	//InterruptedException 异常: 一般是线程阻塞或等待时被打断导致的
+	//创建zookeeper客户端，并添加监听器
 	@Before
 	public void init() throws IOException{
 
-			zkClient = new ZooKeeper(connectString, sessionTimeout, new Watcher() {
-				
-				public void process(WatchedEvent event) {
-					System.out.println("****Watcher****** " + event.getType() + " -- " + event.getPath());
-					
-						try {
-							zkClient.getChildren("/", true);
-						} catch (KeeperException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+		zkClient = new ZooKeeper(connectString, sessionTimeout, new Watcher() {
 
+			public void process(WatchedEvent event) {
+				System.out.println("****Watcher****** " + event.getType() + " -- " + event.getPath());
+
+				try {
+					zkClient.getChildren("/", true);
+				} catch (KeeperException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				});
+
+			}
+		});
 
 	}
-	
-	// �����ӽڵ�
+
+	// 创建子节点
 	@Test
 	public void create() throws KeeperException, InterruptedException {
-		
-		//����1 �� Ҫ�����Ľڵ��·��
-		//����2 �� �ڵ�����
-		//����3 �� �ڵ�Ȩ��
-		//����4 : �ڵ�����
+
+		//参数1 ： 要创建的节点的路径
+		//参数2 ： 节点数据
+		//参数3 ： 节点权限
+		//参数4 : 节点类型
 		String nodeCreated = zkClient.create("/edg", "iboy".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 		System.out.println("creat node: " + nodeCreated);
 	}
-	
-	//�޸Ľڵ�����
+
+	//修改节点数据
 	@Test
 	public void set() throws KeeperException, InterruptedException {
 		String node = "/rng";
 		zkClient.setData(node, "windows".getBytes(), -1);
-		System.out.println("�޸ĳɹ���");
+		System.out.println("修改成功！");
 	}
-	
-	//��ȡ�ӽڵ㲢�����ӽڵ�仯
+
+	//获取子节点并监听子节点变化
 	@Test
 	public void getChildren() throws KeeperException, InterruptedException {
-		
-		//��ȡ�ӽڵ�
+
+		//获取子节点
 		List<String> children = null;
 		String node = "/";
 		children = zkClient.getChildren(node, true);
-	
+
 		for(String child : children) {
 			System.out.println(child + ":");
 			Stat stat = new Stat();
@@ -83,12 +83,12 @@ public class ZkCli01 {
 			System.out.println("stat: " + stat);
 			System.out.println();
 		}
-		
-		//�̲߳��˳������Լ����ӽڵ�仯
+
+		//线程不退出，可以监听子节点变化
 		try {TimeUnit.SECONDS.sleep(Integer.MAX_VALUE);} catch (InterruptedException e) {e.printStackTrace();}
 	}
-	
-	//�жϽڵ��Ƿ����
+
+	//判断节点是否存在
 	@Test
 	public void exist() throws KeeperException, InterruptedException {
 		Stat stat = null;
@@ -96,8 +96,8 @@ public class ZkCli01 {
 		stat = zkClient.exists(node, false);
 		System.out.println(node + (stat == null ? " not exist" : " exist"));
 	}
-	
-	//ɾ���ڵ�
+
+	//删除节点
 	@Test
 	public void delete() throws InterruptedException, KeeperException {
 		String node = "/rng4";

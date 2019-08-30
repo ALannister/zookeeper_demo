@@ -16,19 +16,19 @@ public class DistributeClient {
 	private static int sessionTimeout = 2000;
 	private static String parentNode = "/servers";
 	private static List<String> servers = new LinkedList<String>();
-	
+
 	private ZooKeeper zk = null;
-	
+
 	public void connect() throws IOException {
 		zk = new ZooKeeper(connectString, sessionTimeout, new Watcher() {
 
 			public void process(WatchedEvent event) {
-				
-				
+
+
 			}});
-		System.out.println("���ӳɹ���");
+		System.out.println("连接成功！");
 	}
-	
+
 	public void getServerList() throws KeeperException, InterruptedException {
 		servers.clear();
 		List<String> children = zk.getChildren(parentNode, true);
@@ -36,7 +36,7 @@ public class DistributeClient {
 			servers.add(parentNode + "/" + child);
 		}
 	}
-	
+
 	public void work(String serverNode) throws KeeperException, InterruptedException {
 		byte[] hostname = zk.getData(serverNode, new Watcher() {
 
@@ -47,7 +47,7 @@ public class DistributeClient {
 						if (servers.size() > 0) {
 							work(servers.get(0));
 						}else {
-							System.out.println("û�з�������");
+							System.out.println("没有服务器！");
 							close();
 						}
 					} catch (KeeperException e) {
@@ -58,17 +58,17 @@ public class DistributeClient {
 						e.printStackTrace();
 					}
 				}
-				
+
 			}}, null);
-		
+
 		System.out.println("Client work with " + new String(hostname));
 	}
-	
+
 	public void close() throws InterruptedException {
 		zk.close();
-		System.out.println("�ͻ��˹رգ�");
+		System.out.println("客户端关闭！");
 	}
-	
+
 	public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
 		DistributeClient client = new DistributeClient();
 		client.connect();
@@ -76,10 +76,10 @@ public class DistributeClient {
 		if (servers.size() > 0) {
 			client.work(servers.get(0));
 		}else {
-			System.out.println("û�з�������");
+			System.out.println("没有服务器！");
 			client.close();
 		}
 		try {TimeUnit.SECONDS.sleep(Integer.MAX_VALUE);} catch (InterruptedException e) {e.printStackTrace();}
 	}
-	
+
 }
